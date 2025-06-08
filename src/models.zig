@@ -1,5 +1,7 @@
 const rl = @import("raylib");
 const settings = @import("settings.zig");
+const FatPointer = @import("fat_pointer.zig").FatPointer;
+const Game = @import("game.zig").Game;
 
 pub const Model = struct {
     const Self = @This();
@@ -22,14 +24,14 @@ pub const Model = struct {
         rl.drawModel(self.model, self.position, 1, .white);
     }
 
-    pub fn update(self: *Self, deltaTime: f32) void {
-        self.move(deltaTime);
+    pub fn update(self: *Self, delta_time: f32) void {
+        self.move(delta_time);
     }
 
-    fn move(self: *Self, deltaTime: f32) void {
-        self.position.x += self.direction.x * self.speed * deltaTime;
-        self.position.y += self.direction.y * self.speed * deltaTime;
-        self.position.z += self.direction.z * self.speed * deltaTime;
+    fn move(self: *Self, delta_time: f32) void {
+        self.position.x += self.direction.x * self.speed * delta_time;
+        self.position.y += self.direction.y * self.speed * delta_time;
+        self.position.z += self.direction.z * self.speed * delta_time;
     }
 };
 
@@ -54,13 +56,12 @@ pub const Player = struct {
     const Self = @This();
 
     base: Model,
-    shoot_laser_func: *const fn (rl.Vector3) anyerror!void,
+    shoot_laser_func: FatPointer(Game, fn (*Game, rl.Vector3) anyerror!void) = undefined,
     angle: f32 = 0,
 
-    pub fn init(model: rl.Model, shoot_laser_func: *const fn (rl.Vector3) anyerror!void) Self {
+    pub fn init(model: rl.Model) Self {
         return .{
             .base = Model.init(model, rl.Vector3.zero(), settings.player_speed, rl.Vector3.zero()),
-            .shoot_laser_func = shoot_laser_func,
         };
     }
 
@@ -69,7 +70,7 @@ pub const Player = struct {
         self.base.direction.x = @floatFromInt(delta);
 
         if (rl.isKeyPressed(.space)) {
-            try self.shoot_laser_func(self.base.position);
+            try self.shoot_laser_func.invoke(.{self.base.position.add(rl.Vector3.init(0, 0, -1))});
         }
     }
 
@@ -85,5 +86,20 @@ pub const Player = struct {
 
     pub fn draw(self: Self) void {
         rl.drawModelEx(self.base.model, self.base.position, rl.Vector3.init(0, 0, 1), self.angle, rl.Vector3.one(), .white);
+    }
+};
+
+pub const Laser = struct {
+    const Self = @This();
+
+    base: Model,
+
+    pub fn init(model: rl.Model, position: rl.Vector3, texture: rl.Texture) Self {
+        const material: *rl.Material = @ptrCast(&model.materials[0]);
+        rl.setMaterialTexture(material, .albedo, texture);
+
+        return .{
+            .base = Model.init(model, position, settings.laser_speed, rl.Vector3.init(0, 0, -1)),
+        };
     }
 };

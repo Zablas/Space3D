@@ -11,6 +11,7 @@ pub const Game = struct {
     sounds: std.StringHashMap(rl.Sound),
     music: std.StringHashMap(rl.Music),
     textures: std.ArrayList(rl.Texture),
+    lasers: std.ArrayList(models.Laser),
     dark_texture: rl.Texture = undefined,
     light_texture: rl.Texture = undefined,
     font: rl.Font = undefined,
@@ -33,13 +34,14 @@ pub const Game = struct {
             .sounds = std.StringHashMap(rl.Sound).init(allocator),
             .music = std.StringHashMap(rl.Music).init(allocator),
             .textures = std.ArrayList(rl.Texture).init(allocator),
+            .lasers = std.ArrayList(models.Laser).init(allocator),
             .camera = camera,
         };
 
         try game.importAssets();
 
         game.floor = try models.Floor.init(game.dark_texture);
-        game.player = models.Player.init(game.models.get("player").?, Game.shoot_laser);
+        game.player = models.Player.init(game.models.get("player").?);
 
         return game;
     }
@@ -49,6 +51,7 @@ pub const Game = struct {
         self.sounds.deinit();
         self.music.deinit();
         self.textures.deinit();
+        self.lasers.deinit();
 
         rl.unloadTexture(self.dark_texture);
         rl.unloadTexture(self.light_texture);
@@ -65,9 +68,15 @@ pub const Game = struct {
     fn update(self: *Self) !void {
         const delta_time = rl.getFrameTime();
         try self.player.update(delta_time);
+
+        for (self.lasers.items) |*laser| {
+            laser.base.update(delta_time);
+        }
     }
 
-    fn shoot_laser(_: rl.Vector3) !void {}
+    pub fn shoot_laser(self: *Self, position: rl.Vector3) !void {
+        try self.lasers.append(models.Laser.init(self.models.get("laser").?, position, self.light_texture));
+    }
 
     fn draw(self: Self) void {
         rl.beginDrawing();
@@ -81,6 +90,10 @@ pub const Game = struct {
         self.floor.base.draw();
         self.draw_shadows();
         self.player.draw();
+
+        for (self.lasers.items) |laser| {
+            laser.base.draw();
+        }
     }
 
     fn draw_shadows(self: Self) void {

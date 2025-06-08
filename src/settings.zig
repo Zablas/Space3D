@@ -8,3 +8,4 @@ pub const meteor_speed_range = [_]u8{ 3, 4 };
 pub const timer_duration = 0.4;
 pub const font_size = 60;
 pub const font_padding = 60;
+pub const laser_speed = 9;
