@@ -84,10 +84,12 @@ pub const Game = struct {
     }
 
     fn draw_shadows(self: Self) void {
+        const player_radius = 0.5 + self.player.base.position.y;
+
         rl.drawCylinder(
             rl.Vector3.init(self.player.base.position.x, -1.5, self.player.base.position.z),
-            0.5,
-            0.5,
+            player_radius,
+            player_radius,
             0.1,
             20,
             rl.Color.init(0, 0, 0, 50),
