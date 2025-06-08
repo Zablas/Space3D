@@ -79,7 +79,19 @@ pub const Game = struct {
         defer rl.endMode3D();
 
         self.floor.base.draw();
+        self.draw_shadows();
         self.player.draw();
+    }
+
+    fn draw_shadows(self: Self) void {
+        rl.drawCylinder(
+            rl.Vector3.init(self.player.base.position.x, -1.5, self.player.base.position.z),
+            0.5,
+            0.5,
+            0.1,
+            20,
+            rl.Color.init(0, 0, 0, 50),
+        );
     }
 
     fn importAssets(self: *Self) !void {
