@@ -54,9 +54,10 @@ pub const Player = struct {
     const Self = @This();
 
     base: Model,
-    shoot_laser_func: *const fn () anyerror!void,
+    shoot_laser_func: *const fn (rl.Vector3) anyerror!void,
+    angle: f32 = 0,
 
-    pub fn init(model: rl.Model, shoot_laser_func: *const fn () anyerror!void) Self {
+    pub fn init(model: rl.Model, shoot_laser_func: *const fn (rl.Vector3) anyerror!void) Self {
         return .{
             .base = Model.init(model, rl.Vector3.zero(), settings.player_speed, rl.Vector3.zero()),
             .shoot_laser_func = shoot_laser_func,
@@ -68,12 +69,20 @@ pub const Player = struct {
         self.base.direction.x = @floatFromInt(delta);
 
         if (rl.isKeyPressed(.space)) {
-            try self.shoot_laser_func();
+            try self.shoot_laser_func(self.base.position);
         }
     }
 
     pub fn update(self: *Self, delta_time: f32) !void {
         try self.input();
         self.base.update(delta_time);
+        self.angle -= self.base.direction.x * 10 * delta_time;
+
+        self.base.position.x = @max(-6, @min(self.base.position.x, 7));
+        self.angle = @max(-15, @min(self.angle, 15));
+    }
+
+    pub fn draw(self: Self) void {
+        rl.drawModelEx(self.base.model, self.base.position, rl.Vector3.init(0, 0, 1), self.angle, rl.Vector3.one(), .white);
     }
 };

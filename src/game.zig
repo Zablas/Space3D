@@ -67,7 +67,7 @@ pub const Game = struct {
         try self.player.update(delta_time);
     }
 
-    fn shoot_laser() !void {}
+    fn shoot_laser(_: rl.Vector3) !void {}
 
     fn draw(self: Self) void {
         rl.beginDrawing();
@@ -79,7 +79,7 @@ pub const Game = struct {
         defer rl.endMode3D();
 
         self.floor.base.draw();
-        self.player.base.draw();
+        self.player.draw();
     }
 
     fn importAssets(self: *Self) !void {
