@@ -3,6 +3,7 @@ const rl = @import("raylib");
 const settings = @import("settings.zig");
 const FatPointer = @import("fat_pointer.zig").FatPointer;
 const Game = @import("game.zig").Game;
+const Timer = @import("timer.zig").Timer;
 
 pub const Model = struct {
     const Self = @This();
@@ -11,6 +12,7 @@ pub const Model = struct {
     position: rl.Vector3,
     speed: f32,
     direction: rl.Vector3,
+    discard: bool = false,
 
     pub fn init(model: rl.Model, position: rl.Vector3, speed: f32, direction: rl.Vector3) Self {
         return .{
@@ -112,6 +114,11 @@ pub const Meteor = struct {
     radius: f32,
     rotation: rl.Vector3,
     rotation_speed: rl.Vector3,
+    hit: bool = false,
+    death_timer: Timer(Self, fn (*Self) anyerror!void) = undefined,
+    shader: rl.Shader,
+    flash_location: i32,
+    flash_amount: rl.Vector2,
 
     pub fn init(texture: rl.Texture) !Self {
         var prng = std.Random.DefaultPrng.init(blk: {
@@ -127,6 +134,9 @@ pub const Meteor = struct {
         const material: *rl.Material = @ptrCast(&model.materials[0]);
         rl.setMaterialTexture(material, .albedo, texture);
 
+        const shader = try rl.loadShader(null, "assets/shaders/flash.fs");
+        model.materials[0].shader = shader;
+
         return .{
             .base = Model.init(
                 model,
@@ -137,15 +147,34 @@ pub const Meteor = struct {
             .radius = radius,
             .rotation = rl.Vector3.init(rand.float(f32) * (5 + 5) - 5, rand.float(f32) * (5 + 5) - 5, rand.float(f32) * (5 + 5) - 5),
             .rotation_speed = rl.Vector3.init(rand.float(f32) * (1 + 1) - 1, rand.float(f32) * (1 + 1) - 1, rand.float(f32) * (1 + 1) - 1),
+            .shader = shader,
+            .flash_location = rl.getShaderLocation(shader, "flash"),
+            .flash_amount = rl.Vector2.init(1, 0),
         };
     }
 
-    pub fn update(self: *Self, delta_time: f32) void {
-        self.base.update(delta_time);
+    pub fn deinit(self: *Self) void {
+        rl.unloadShader(self.shader);
+    }
 
-        self.rotation.x += self.rotation_speed.x * delta_time;
-        self.rotation.y += self.rotation_speed.y * delta_time;
-        self.rotation.z += self.rotation_speed.z * delta_time;
-        self.base.model.transform = rl.Matrix.rotateXYZ(self.rotation);
+    pub fn update(self: *Self, delta_time: f32) void {
+        self.death_timer.update();
+
+        if (!self.hit) {
+            self.base.update(delta_time);
+
+            self.rotation.x += self.rotation_speed.x * delta_time;
+            self.rotation.y += self.rotation_speed.y * delta_time;
+            self.rotation.z += self.rotation_speed.z * delta_time;
+            self.base.model.transform = rl.Matrix.rotateXYZ(self.rotation);
+        }
+    }
+
+    pub fn activateDiscard(self: *Self) !void {
+        self.base.discard = true;
+    }
+
+    pub fn flash(self: *Self) void {
+        rl.setShaderValue(self.shader, self.flash_location, &self.flash_amount, .vec2);
     }
 };

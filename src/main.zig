@@ -23,7 +23,7 @@ pub fn main() !void {
         .method = Game.shootLaser,
     };
 
-    game.meteor_timer = Timer.init(
+    game.meteor_timer = Timer(Game, fn (*Game) anyerror!void).init(
         settings.meteor_timer_duration,
         true,
         true,
