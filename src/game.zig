@@ -88,7 +88,7 @@ pub const Game = struct {
         try self.player.update(delta_time);
 
         for (self.lasers.items) |*laser| {
-            laser.base.update(delta_time);
+            laser.update(delta_time);
         }
 
         for (self.meteors.items) |meteor| {

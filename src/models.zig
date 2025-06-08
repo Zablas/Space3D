@@ -105,6 +105,14 @@ pub const Laser = struct {
             .base = Model.init(model, position, settings.laser_speed, rl.Vector3.init(0, 0, -1)),
         };
     }
+
+    pub fn update(self: *Self, delta_time: f32) void {
+        self.base.update(delta_time);
+
+        if (self.base.position.z < -200) {
+            self.base.discard = true;
+        }
+    }
 };
 
 pub const Meteor = struct {
@@ -167,6 +175,10 @@ pub const Meteor = struct {
             self.rotation.y += self.rotation_speed.y * delta_time;
             self.rotation.z += self.rotation_speed.z * delta_time;
             self.base.model.transform = rl.Matrix.rotateXYZ(self.rotation);
+
+            if (self.base.position.z > 200) {
+                self.base.discard = true;
+            }
         }
     }
 
