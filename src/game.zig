@@ -16,6 +16,7 @@ pub const Game = struct {
     font: rl.Font = undefined,
     camera: rl.Camera3D,
     floor: models.Floor = undefined,
+    player: models.Player = undefined,
 
     pub fn init(allocator: std.mem.Allocator) !Self {
         const camera = rl.Camera3D{
@@ -38,6 +39,7 @@ pub const Game = struct {
         try game.importAssets();
 
         game.floor = try models.Floor.init(game.dark_texture);
+        game.player = models.Player.init(game.models.get("player").?, Game.shoot_laser);
 
         return game;
     }
@@ -64,6 +66,8 @@ pub const Game = struct {
         _ = rl.getFrameTime();
     }
 
+    fn shoot_laser() !void {}
+
     fn draw(self: Self) void {
         rl.beginDrawing();
         defer rl.endDrawing();
@@ -74,6 +78,7 @@ pub const Game = struct {
         defer rl.endMode3D();
 
         self.floor.base.draw();
+        self.player.base.draw();
     }
 
     fn importAssets(self: *Self) !void {

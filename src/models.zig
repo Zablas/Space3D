@@ -1,4 +1,5 @@
 const rl = @import("raylib");
+const settings = @import("settings.zig");
 
 pub const Model = struct {
     const Self = @This();
@@ -45,6 +46,20 @@ pub const Floor = struct {
 
         return .{
             .base = Model.init(model, rl.Vector3.init(6.5, -2, -8), 0, rl.Vector3.zero()),
+        };
+    }
+};
+
+pub const Player = struct {
+    const Self = @This();
+
+    base: Model,
+    shoot_laser_func: *const fn () anyerror!void,
+
+    pub fn init(model: rl.Model, shoot_laser_func: *const fn () anyerror!void) Self {
+        return .{
+            .base = Model.init(model, rl.Vector3.zero(), settings.player_speed, rl.Vector3.zero()),
+            .shoot_laser_func = shoot_laser_func,
         };
     }
 };
