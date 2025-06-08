@@ -45,6 +45,7 @@ pub const Game = struct {
         };
 
         try game.importAssets();
+        rl.playMusicStream(game.music.get("music").?);
 
         game.floor = try models.Floor.init(game.dark_texture);
         game.player = models.Player.init(game.models.get("player").?);
@@ -55,7 +56,6 @@ pub const Game = struct {
     pub fn deinit(self: *Self) void {
         self.models.deinit();
         self.sounds.deinit();
-        self.music.deinit();
         self.textures.deinit();
         self.lasers.deinit();
 
@@ -68,6 +68,9 @@ pub const Game = struct {
         rl.unloadTexture(self.dark_texture);
         rl.unloadTexture(self.light_texture);
         rl.unloadFont(self.font);
+
+        rl.unloadMusicStream(self.music.get("music").?);
+        self.music.deinit();
     }
 
     pub fn run(self: *Self) !void {
@@ -91,10 +94,13 @@ pub const Game = struct {
         for (self.meteors.items) |meteor| {
             meteor.update(delta_time);
         }
+
+        rl.updateMusicStream(self.music.get("music").?);
     }
 
     pub fn shootLaser(self: *Self, position: rl.Vector3) !void {
         try self.lasers.append(models.Laser.init(self.models.get("laser").?, position, self.light_texture));
+        rl.playSound(self.sounds.get("laser").?);
     }
 
     pub fn createMeteor(self: *Self) !void {
@@ -197,6 +203,7 @@ pub const Game = struct {
                     meteor.hit = true;
                     meteor.death_timer.activate();
                     meteor.flash();
+                    rl.playSound(self.sounds.get("explosion").?);
                 }
             }
         }
