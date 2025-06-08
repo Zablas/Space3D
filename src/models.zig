@@ -1,0 +1,50 @@
+const rl = @import("raylib");
+
+pub const Model = struct {
+    const Self = @This();
+
+    model: rl.Model,
+    position: rl.Vector3,
+    speed: f32,
+    direction: rl.Vector3,
+
+    pub fn init(model: rl.Model, position: rl.Vector3, speed: f32, direction: rl.Vector3) Self {
+        return .{
+            .model = model,
+            .position = position,
+            .speed = speed,
+            .direction = direction,
+        };
+    }
+
+    pub fn draw(self: Self) void {
+        rl.drawModel(self.model, self.position, 1, .white);
+    }
+
+    pub fn update(self: *Self, deltaTime: f32) void {
+        self.move(deltaTime);
+    }
+
+    fn move(self: *Self, deltaTime: f32) void {
+        self.position.x += self.direction.x * self.speed * deltaTime;
+        self.position.y += self.direction.y * self.speed * deltaTime;
+        self.position.z += self.direction.z * self.speed * deltaTime;
+    }
+};
+
+pub const Floor = struct {
+    const Self = @This();
+
+    base: Model,
+
+    pub fn init(texture: rl.Texture) !Self {
+        const model = try rl.loadModelFromMesh(rl.genMeshCube(32, 1, 32));
+
+        const material: *rl.Material = @ptrCast(&model.materials[0]);
+        rl.setMaterialTexture(material, .albedo, texture);
+
+        return .{
+            .base = Model.init(model, rl.Vector3.init(6.5, -2, -8), 0, rl.Vector3.zero()),
+        };
+    }
+};

@@ -1,6 +1,7 @@
 const std = @import("std");
 const rl = @import("raylib");
 const settings = @import("settings.zig");
+const models = @import("models.zig");
 
 pub const Game = struct {
     const Self = @This();
@@ -14,6 +15,7 @@ pub const Game = struct {
     light_texture: rl.Texture = undefined,
     font: rl.Font = undefined,
     camera: rl.Camera3D,
+    floor: models.Floor = undefined,
 
     pub fn init(allocator: std.mem.Allocator) !Self {
         const camera = rl.Camera3D{
@@ -34,6 +36,8 @@ pub const Game = struct {
         };
 
         try game.importAssets();
+
+        game.floor = try models.Floor.init(game.dark_texture);
 
         return game;
     }
@@ -68,6 +72,8 @@ pub const Game = struct {
 
         rl.beginMode3D(self.camera);
         defer rl.endMode3D();
+
+        self.floor.base.draw();
     }
 
     fn importAssets(self: *Self) !void {
