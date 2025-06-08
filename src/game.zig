@@ -55,15 +55,16 @@ pub const Game = struct {
         rl.unloadFont(self.font);
     }
 
-    pub fn run(self: *Self) void {
+    pub fn run(self: *Self) !void {
         while (!rl.windowShouldClose()) {
-            self.update();
+            try self.update();
             self.draw();
         }
     }
 
-    fn update(_: *Self) void {
-        _ = rl.getFrameTime();
+    fn update(self: *Self) !void {
+        const delta_time = rl.getFrameTime();
+        try self.player.update(delta_time);
     }
 
     fn shoot_laser() !void {}

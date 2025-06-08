@@ -62,4 +62,18 @@ pub const Player = struct {
             .shoot_laser_func = shoot_laser_func,
         };
     }
+
+    pub fn input(self: *Self) !void {
+        const delta = @as(i32, @intCast(@intFromBool(rl.isKeyDown(.right)))) - @as(i32, @intCast(@intFromBool(rl.isKeyDown(.left))));
+        self.base.direction.x = @floatFromInt(delta);
+
+        if (rl.isKeyPressed(.space)) {
+            try self.shoot_laser_func();
+        }
+    }
+
+    pub fn update(self: *Self, delta_time: f32) !void {
+        try self.input();
+        self.base.update(delta_time);
+    }
 };

@@ -17,5 +17,5 @@ pub fn main() !void {
     var game = try Game.init(allocator);
     defer game.deinit();
 
-    game.run();
+    try game.run();
 }
