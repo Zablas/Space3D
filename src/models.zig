@@ -1,3 +1,4 @@
+const std = @import("std");
 const rl = @import("raylib");
 const settings = @import("settings.zig");
 const FatPointer = @import("fat_pointer.zig").FatPointer;
@@ -101,5 +102,50 @@ pub const Laser = struct {
         return .{
             .base = Model.init(model, position, settings.laser_speed, rl.Vector3.init(0, 0, -1)),
         };
+    }
+};
+
+pub const Meteor = struct {
+    const Self = @This();
+
+    base: Model,
+    radius: f32,
+    rotation: rl.Vector3,
+    rotation_speed: rl.Vector3,
+
+    pub fn init(texture: rl.Texture) !Self {
+        var prng = std.Random.DefaultPrng.init(blk: {
+            var seed: u64 = undefined;
+            try std.posix.getrandom(std.mem.asBytes(&seed));
+            break :blk seed;
+        });
+        const rand = prng.random();
+
+        const position = rl.Vector3.init(rand.float(f32) * (7 + 6) - 6, 0, -20);
+        const radius = rand.float(f32) * (1.5 - 0.6) + 0.6;
+        const model = try rl.loadModelFromMesh(rl.genMeshSphere(radius, 8, 8));
+        const material: *rl.Material = @ptrCast(&model.materials[0]);
+        rl.setMaterialTexture(material, .albedo, texture);
+
+        return .{
+            .base = Model.init(
+                model,
+                position,
+                rand.float(f32) * (settings.meteor_speed_range[1] - settings.meteor_speed_range[0]) + settings.meteor_speed_range[0],
+                rl.Vector3.init(0, 0, rand.float(f32) * (1.25 - 0.75) + 0.75),
+            ),
+            .radius = radius,
+            .rotation = rl.Vector3.init(rand.float(f32) * (5 + 5) - 5, rand.float(f32) * (5 + 5) - 5, rand.float(f32) * (5 + 5) - 5),
+            .rotation_speed = rl.Vector3.init(rand.float(f32) * (1 + 1) - 1, rand.float(f32) * (1 + 1) - 1, rand.float(f32) * (1 + 1) - 1),
+        };
+    }
+
+    pub fn update(self: *Self, delta_time: f32) void {
+        self.base.update(delta_time);
+
+        self.rotation.x += self.rotation_speed.x * delta_time;
+        self.rotation.y += self.rotation_speed.y * delta_time;
+        self.rotation.z += self.rotation_speed.z * delta_time;
+        self.base.model.transform = rl.Matrix.rotateXYZ(self.rotation);
     }
 };

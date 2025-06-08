@@ -2,6 +2,7 @@ const std = @import("std");
 const rl = @import("raylib");
 const settings = @import("settings.zig");
 const models = @import("models.zig");
+const Timer = @import("timer.zig").Timer;
 
 pub const Game = struct {
     const Self = @This();
@@ -12,12 +13,14 @@ pub const Game = struct {
     music: std.StringHashMap(rl.Music),
     textures: std.ArrayList(rl.Texture),
     lasers: std.ArrayList(models.Laser),
+    meteors: std.ArrayList(models.Meteor),
     dark_texture: rl.Texture = undefined,
     light_texture: rl.Texture = undefined,
     font: rl.Font = undefined,
     camera: rl.Camera3D,
     floor: models.Floor = undefined,
     player: models.Player = undefined,
+    meteor_timer: Timer = undefined,
 
     pub fn init(allocator: std.mem.Allocator) !Self {
         const camera = rl.Camera3D{
@@ -35,6 +38,7 @@ pub const Game = struct {
             .music = std.StringHashMap(rl.Music).init(allocator),
             .textures = std.ArrayList(rl.Texture).init(allocator),
             .lasers = std.ArrayList(models.Laser).init(allocator),
+            .meteors = std.ArrayList(models.Meteor).init(allocator),
             .camera = camera,
         };
 
@@ -52,6 +56,7 @@ pub const Game = struct {
         self.music.deinit();
         self.textures.deinit();
         self.lasers.deinit();
+        self.meteors.deinit();
 
         rl.unloadTexture(self.dark_texture);
         rl.unloadTexture(self.light_texture);
@@ -67,15 +72,31 @@ pub const Game = struct {
 
     fn update(self: *Self) !void {
         const delta_time = rl.getFrameTime();
+        self.meteor_timer.update();
         try self.player.update(delta_time);
 
         for (self.lasers.items) |*laser| {
             laser.base.update(delta_time);
         }
+
+        for (self.meteors.items) |*meteor| {
+            meteor.update(delta_time);
+        }
     }
 
     pub fn shoot_laser(self: *Self, position: rl.Vector3) !void {
         try self.lasers.append(models.Laser.init(self.models.get("laser").?, position, self.light_texture));
+    }
+
+    pub fn create_meteor(self: *Self) !void {
+        var prng = std.Random.DefaultPrng.init(blk: {
+            var seed: u64 = undefined;
+            try std.posix.getrandom(std.mem.asBytes(&seed));
+            break :blk seed;
+        });
+        const rand = prng.random();
+
+        try self.meteors.append(try models.Meteor.init(self.textures.items[rand.intRangeAtMost(usize, 0, self.textures.items.len - 1)]));
     }
 
     fn draw(self: Self) void {
@@ -94,6 +115,10 @@ pub const Game = struct {
         for (self.lasers.items) |laser| {
             laser.base.draw();
         }
+
+        for (self.meteors.items) |meteor| {
+            meteor.base.draw();
+        }
     }
 
     fn draw_shadows(self: Self) void {
@@ -107,6 +132,17 @@ pub const Game = struct {
             20,
             rl.Color.init(0, 0, 0, 50),
         );
+
+        for (self.meteors.items) |meteor| {
+            rl.drawCylinder(
+                rl.Vector3.init(meteor.base.position.x, -1.5, meteor.base.position.z),
+                meteor.radius * 0.8,
+                meteor.radius * 0.8,
+                0.1,
+                20,
+                rl.Color.init(0, 0, 0, 50),
+            );
+        }
     }
 
     fn importAssets(self: *Self) !void {
