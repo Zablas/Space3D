@@ -20,7 +20,7 @@ pub fn main() !void {
 
     game.player.shoot_laser_func = FatPointer(Game, fn (*Game, rl.Vector3) anyerror!void){
         .state = &game,
-        .method = Game.shoot_laser,
+        .method = Game.shootLaser,
     };
 
     game.meteor_timer = Timer.init(
@@ -29,7 +29,7 @@ pub fn main() !void {
         true,
         FatPointer(Game, fn (*Game) anyerror!void){
             .state = &game,
-            .method = Game.create_meteor,
+            .method = Game.createMeteor,
         },
     );
 

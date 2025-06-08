@@ -84,11 +84,11 @@ pub const Game = struct {
         }
     }
 
-    pub fn shoot_laser(self: *Self, position: rl.Vector3) !void {
+    pub fn shootLaser(self: *Self, position: rl.Vector3) !void {
         try self.lasers.append(models.Laser.init(self.models.get("laser").?, position, self.light_texture));
     }
 
-    pub fn create_meteor(self: *Self) !void {
+    pub fn createMeteor(self: *Self) !void {
         var prng = std.Random.DefaultPrng.init(blk: {
             var seed: u64 = undefined;
             try std.posix.getrandom(std.mem.asBytes(&seed));
@@ -109,7 +109,7 @@ pub const Game = struct {
         defer rl.endMode3D();
 
         self.floor.base.draw();
-        self.draw_shadows();
+        self.drawShadows();
         self.player.draw();
 
         for (self.lasers.items) |laser| {
@@ -121,7 +121,7 @@ pub const Game = struct {
         }
     }
 
-    fn draw_shadows(self: Self) void {
+    fn drawShadows(self: Self) void {
         const player_radius = 0.5 + self.player.base.position.y;
 
         rl.drawCylinder(
