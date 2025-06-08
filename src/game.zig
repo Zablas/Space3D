@@ -124,9 +124,7 @@ pub const Game = struct {
         defer rl.endDrawing();
 
         rl.clearBackground(settings.bg_color);
-
         rl.beginMode3D(self.camera);
-        defer rl.endMode3D();
 
         self.floor.base.draw();
         self.drawShadows();
@@ -139,6 +137,9 @@ pub const Game = struct {
         for (self.meteors.items) |meteor| {
             meteor.base.draw();
         }
+
+        rl.endMode3D();
+        self.drawScore();
     }
 
     fn drawShadows(self: Self) void {
@@ -163,6 +164,19 @@ pub const Game = struct {
                 rl.Color.init(0, 0, 0, 50),
             );
         }
+    }
+
+    fn drawScore(self: Self) void {
+        const score: i64 = @intFromFloat(rl.getTime());
+        const text = rl.textFormat("%d", .{score});
+        rl.drawTextEx(
+            self.font,
+            text,
+            rl.Vector2.init(settings.window_width - settings.font_padding, settings.window_height - settings.font_padding),
+            settings.font_size,
+            2,
+            .white,
+        );
     }
 
     fn checkCollisions(self: *Game) void {
