@@ -77,6 +77,7 @@ pub const Player = struct {
         try self.input();
         self.base.update(delta_time);
         self.angle -= self.base.direction.x * 10 * delta_time;
+        self.base.position.y += @floatCast(@sin(rl.getTime() * 5) * delta_time * 0.1);
 
         self.base.position.x = @max(-6, @min(self.base.position.x, 7));
         self.angle = @max(-15, @min(self.angle, 15));
